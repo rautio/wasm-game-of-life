@@ -18,36 +18,11 @@ pub struct Universe {
     cells: Vec<Cell>,
 }
 
-impl Default for Universe {
-    fn default() -> Self {
-        let width = 64;
-        let height = 64;
-        let cells = (0..width * height)
-            .map(|i| {
-                if i % 2 == 0 || i % 7 == 0 {
-                    Cell::Alive
-                } else {
-                    Cell::Dead
-                }
-            })
-            .collect();
-        Self::new(width, height, cells)
-    }
-}
-
 impl Universe {
-    pub fn new(width: u32, height: u32, cells: Vec<Cell>) -> Self {
-        assert!(width * height == cells.len() as u32);
-        Self {
-            width,
-            height,
-            cells,
-        }
-    }
     pub fn get_index(&self, row: u32, column: u32) -> usize {
         (row * self.width + column) as usize
     }
-    fn live_neighbor_count(&self, row: u32, column: u32) -> u8 {
+    pub fn live_neighbor_count(&self, row: u32, column: u32) -> u8 {
         let mut count = 0;
         // We use self.height - 1 instead of just -1 so we wrap around the grid
         let row_deltas = vec![self.height - 1, 0, 1];
@@ -74,6 +49,24 @@ impl Universe {
 
 #[wasm_bindgen]
 impl Universe {
+    pub fn new() -> Self {
+        let width = 64;
+        let height = 64;
+        let cells = (0..width * height)
+            .map(|i| {
+                if i % 2 == 0 || i % 7 == 0 {
+                    Cell::Alive
+                } else {
+                    Cell::Dead
+                }
+            })
+            .collect();
+        Self {
+            width,
+            height,
+            cells,
+        }
+    }
     pub fn tick(&mut self) {
         let mut next = self.cells.clone();
         for row in 0..self.height {
@@ -98,6 +91,9 @@ impl Universe {
         }
         self.cells = next;
     }
+    pub fn render(&self) -> String {
+        self.to_string()
+    }
 }
 
 impl fmt::Display for Universe {
@@ -117,15 +113,4 @@ impl fmt::Display for Universe {
 pub fn greet(input: &str) {
     let mut s = "Hello, wasm-game-of-life! ".to_owned();
     s.push_str(input);
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn default() {
-        let uni = Universe::default();
-        assert_eq!(64 * 64, uni.len());
-    }
 }
