@@ -25,6 +25,15 @@ pub enum Cell {
     Dead = 0,
 }
 
+impl Cell {
+    pub fn toggle(&mut self) {
+        *self = match *self {
+            Cell::Alive => Cell::Dead,
+            Cell::Dead => Cell::Alive,
+        }
+    }
+}
+
 #[wasm_bindgen]
 pub struct Universe {
     width: u32,
@@ -118,15 +127,10 @@ impl Universe {
             cells,
         }
     }
-    // pub async fn call_api(&self) -> Result<bool> {
-    //     log!("call_api made");
-    //     let body = reqwest::get("https://www.rust-lang.org")
-    //         .await?
-    //         .text()
-    //         .await?;
-    //     log!("body = {:?}", body);
-    //     Ok(true)
-    // }
+    pub fn toggle_cell(&mut self, row: u32, cell: u32) {
+        let idx = self.get_index(row, cell);
+        self.cells[idx].toggle();
+    }
     pub fn tick(&mut self) {
         console_log!("tick");
         // self.call_api();
