@@ -11,11 +11,11 @@ use wasm_bindgen::prelude::*;
 extern crate web_sys;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
-// macro_rules! log {
-//     ( $( $t:tt )* ) => {
-//         web_sys::console::log_1(&format!( $( $t )* ).into());
-//     }
-// }
+macro_rules! console_log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
 
 #[wasm_bindgen]
 #[repr(u8)]
@@ -128,7 +128,7 @@ impl Universe {
     //     Ok(true)
     // }
     pub fn tick(&mut self) {
-        // log!("tick");
+        console_log!("tick");
         // self.call_api();
         let mut next = self.cells.clone();
         for row in 0..self.height {
