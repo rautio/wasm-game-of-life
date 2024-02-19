@@ -34,6 +34,23 @@ impl Cell {
     }
 }
 
+pub struct Timer<'a> {
+    name: &'a str,
+}
+
+impl<'a> Timer<'a> {
+    pub fn new(name: &'a str) -> Timer<'a>{
+        web_sys::console::time_with_label(name);
+        Timer { name }
+    }
+}
+
+impl<'a> Drop for Timer<'a> {
+    fn drop(&mut self) {
+        web_sys::console::time_end_with_label(self.name);
+    }
+}
+
 #[wasm_bindgen]
 pub struct Universe {
     width: u32,
@@ -132,29 +149,36 @@ impl Universe {
         self.cells[idx].toggle();
     }
     pub fn tick(&mut self) {
-        console_log!("tick");
+        let _timer = Timer::new("Universe::tick");
         // self.call_api();
-        let mut next = self.cells.clone();
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let idx = self.get_index(row, col);
-                let cell = self.cells[idx];
-                let neighbor_count = self.live_neighbor_count(row, col);
-                let next_cell = match (cell, neighbor_count) {
-                    // Underpopulation
-                    (Cell::Alive, x) if x < 2 => Cell::Dead,
-                    // Overpopulation
-                    (Cell::Alive, x) if x > 3 => Cell::Dead,
-                    // Reproduction
-                    (Cell::Dead, 3) => Cell::Alive,
-                    // Lives on
-                    (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
-                    // All other cells remain as-is
-                    (otherwise, _) => otherwise,
-                };
-                next[idx] = next_cell;
+        let mut next = {
+            let _timer = Timer::new("allocate next cells");
+            self.cells.clone()
+        };
+        {
+            let _timer = Timer::new("new generation");
+            for row in 0..self.height {
+                for col in 0..self.width {
+                    let idx = self.get_index(row, col);
+                    let cell = self.cells[idx];
+                    let neighbor_count = self.live_neighbor_count(row, col);
+                    let next_cell = match (cell, neighbor_count) {
+                        // Underpopulation
+                        (Cell::Alive, x) if x < 2 => Cell::Dead,
+                        // Overpopulation
+                        (Cell::Alive, x) if x > 3 => Cell::Dead,
+                        // Reproduction
+                        (Cell::Dead, 3) => Cell::Alive,
+                        // Lives on
+                        (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
+                        // All other cells remain as-is
+                        (otherwise, _) => otherwise,
+                    };
+                    next[idx] = next_cell;
+                }
             }
         }
+        let _timer = Timer::new("free old cells");
         self.cells = next;
     }
     pub fn render(&self) -> String {
